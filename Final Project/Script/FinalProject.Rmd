@@ -1,0 +1,345 @@
+---
+title: "Final Project: Covid's effect on Danes' Television Consumption"
+author: "Karoline Støjberg Sejersen"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  html_document:
+          toc: true 
+          toc_float: true
+---
+```{r libraries}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(readr)
+```
+
+
+# About the data
+The data has been collected from Danmarks Statistik and Our World in Data (WHO), and is free to use. It is present in my GitHub https://github.com/Digital-Methods-HASS/AU681035_Sejersen_Karoline
+
+* Link for Danmarks Statistik data: https://www.statistikbanken.dk/KVUH2KA.
+* Link for WHO data: https://ourworldindata.org/grapher/share-of-adults-who-are-overweight  
+
+
+# License
+Creative Commons Legal Code - CC0 1.0 Universal (CC0 1.0)
+
+
+# Data processing 
+### Loading data about TV-shows and movies
+I am reading in the data from Danmarks Statistik about the weekly consumption of TV-shows and movies. The data has been made clean by me. However, I do have a problem because the Excel-sheets I create myself can only be separated by semicolon instead of comma. Therefore, I use the function read_delim() instead of read_csv(), so I can change the delimiter to semicolon.
+
+```{r loading data for TV-shows and movies}
+tvshows_danes <- read_delim("data/tvshows_danes.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+head(tvshows_danes)
+
+movies_danes <- movies <- read_delim("data/movies_danes.csv", delim = ";", 
+    escape_double = FALSE, trim_ws = TRUE)
+head(movies_danes)
+```
+
+
+
+### Plotting the data for TV-shows and movies
+Now I plot the data by using a data frame (See research paper for more information about the data frame). 
+
+```{r creating data frame for TV-shows}
+df_tvshows <-  tvshows_danes %>% 
+  data.frame(year = c(2018, 2019, 2020),
+                `a. No activity` = c(tvshows_danes$no_activity_danes),
+                `b. 1-2 times weekly` = c(tvshows_danes$`1_2_times_weekly_danes`),
+                `c. 3-4 times weekly` = c(tvshows_danes$`3_4_times_weekly_danes`),
+                `d. Nearly daily` = c(tvshows_danes$nearly_daily_danes),
+                `e. Multiple times daily` = c(tvshows_danes$multiple_times_daily_danes)) %>%
+        pivot_longer(cols = 7:11, names_to = "indicatorTV", values_to = "valuesTV")  
+```
+
+
+
+```{r plotting data for TV-shows}
+df_tvshows %>%
+  ggplot(aes(x = indicatorTV, y = valuesTV, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by Danes per year",
+         x="How often Danes watch TV-shows",
+         y="Number of Danes") +
+  theme(text = element_text(size = 12), axis.text.x = element_text(angle = 20, vjust = 1, hjust = 1)) +
+  ylim(0,20000) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3')) +
+  scale_x_discrete(limits=c("no_activity_danes","X1_2_times_weekly_danes","X3_4_times_weekly_danes","nearly_daily_danes","multiple_times_daily_danes"), labels=c("no_activity_danes" = "No activity", "X1_2_times_weekly_danes" = "1-2 days weekly", "X3_4_times_weekly_danes" = "3-4 days weekly","nearly_daily_danes" = "Nearly daily","multiple_times_daily_danes" = "Multiple times daily"))
+
+```
+
+
+
+```{r creating data frame for movies}
+
+df_movies <-  movies_danes %>% 
+  data.frame(year = c(2018, 2019, 2020),
+                `a. No activity`= c(movies_danes$no_activity_danes),
+                `b. 1-2 days weekly` = c(movies_danes$`1_2_days_weekly_danes`),
+                `c. 3-4 days weekly` = c(movies_danes$`3_4_days_weekly_danes`),
+                `d. Nearly daily`= c(movies_danes$nearly_daily_danes),
+                `e. Multiple times daily` = c(movies_danes$multiple_times_daily_danes)) %>%
+        pivot_longer(cols = 7:11, names_to = "indicatorM", values_to = "valuesM")
+```
+
+
+
+```{r plotting data for movies}
+df_movies %>%
+  ggplot(aes(x = indicatorM, y = valuesM, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by Danes per year",
+         x="How often Danes watch movies",
+         y="Number of Danes") +
+  theme(text = element_text(size = 12), axis.text.x = element_text(angle = 20, vjust = 1, hjust = 1)) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3')) +
+  scale_x_discrete(limits=c("no_activity_danes","X1_2_days_weekly_danes","X3_4_days_weekly_danes","nearly_daily_danes","multiple_times_daily_danes"),labels=c("multiple_times_daily_danes" = "Multiple times daily", "nearly_daily_danes" = "Nearly daily", "no_activity_danes" = "No activity", "X1_2_days_weekly_danes" = "1-2 days weekly", "X3_4_days_weekly_danes" = "3-4 days weekly"))
+```
+
+
+
+### Loading and plotting data for overweight/obesity in Denmark 
+This data has been uploaded by Our World in Data but is from WHO. This data was clean and I did not have any trouble with using the read_csv()-function.
+
+```{r loading the data for overweight and obese Danes}
+overweight_adult_danes_1975_2016 <- read_csv("data/overweight_adult_danes_1975_2016.csv")
+head(overweight_adult_danes_1975_2016)
+
+```
+
+
+```{r plotting data}
+overweight_adult_danes_1975_2016 %>% 
+  ggplot(aes(x= overweight_adult_danes_1975_2016$year, y = overweight_adult_danes_1975_2016$percent_overweight_adult_danes)) +
+  geom_line(color="deepskyblue1", size=2) +
+    labs(title="Percentage of overweight or obese Danes by year",
+         x="Year",
+         y="Percentage of overweight Danes") 
+  
+```
+
+
+
+### Loading data for consumption of TV-shows and movies according to age
+Again, I have used data from Danmarks Statistik and face the same problems with the read_csv()-function.
+
+```{r loading the data for age groups}
+
+age_tvshows <- read_delim("data/age_tvshows.csv", 
+                        delim = ";", escape_double = FALSE, trim_ws = TRUE)
+head(age_tvshows)
+
+age_movies <- read_delim("data/age_movies.csv", 
+                        delim = ";", escape_double = FALSE, trim_ws = TRUE)
+head(age_movies)
+
+```
+
+
+
+### Plotting weekly consumption of TV-shows according to age
+
+```{r plotting TV-shows 16-24 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_16_24, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 16-24 per year",
+       x="How often the age group 16-24 watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 25-34 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_25_34, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 25-34 per year",
+       x="How often the age group 25-34 watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 35-44 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_35_44, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 35-44 per year",
+       x="How often the age group 35-44 year TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 45-54 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_45_54, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 45-54 per year",
+       x="How often the age group 45-54 watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 55-64 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_55_64, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 55-64 per year",
+       x="How often the age group 55-64 watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 65-74 year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_65_74, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 65-74 per year",
+       x="How often the age group 65-74 watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting TV-shows 75+ year olds}
+age_tvshows %>% 
+  ggplot(aes(x = year, y = tvshows_75_over, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of TV-shows by the age group 75+ per year",
+       x="YHow often the age group 75+ watch TV-shows",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_tvshows$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+
+### Plotting weekly consumption of movies according to age
+
+
+```{r plotting movies 16-24 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_16_24, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 16-24 per year",
+       x="How often the age group 16-24 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+
+```
+
+
+```{r plotting movies 25-34 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_25_34, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 25-34 per year",
+       x="How often the age group 25-34 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting movies 35-44 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_35_44, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 35-44 per year",
+       x="How often the age group 35-44 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting movies 45-54 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_45_54, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 45-54 per year",
+       x="How often the age group 45-54 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting movies 55-64 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_55_64, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 55-64 per year",
+       x="How often the age group 55-64 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting movies 65-74 year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_65_74, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 65-74 per year",
+       x="How often the age group 65-74 watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
+
+```{r plotting movies 75+ year olds}
+age_movies %>% 
+  ggplot(aes(x = year, y = movies_75_over, fill = as.factor(year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title="Weekly consumption of movies by the age group 75+ per year",
+       x="How often the age group 75+ watch movies",
+       y="Percent") +
+  theme(text = element_text(size = 12))+
+  facet_wrap(~ age_movies$amount) +
+  ylim(0,46) +
+  scale_fill_manual('Year', values = c('salmon','palegreen3','skyblue3'))
+```
+
